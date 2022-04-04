@@ -46,8 +46,22 @@ syscall_handler (struct intr_frame *f)
 {
   int32_t* esp = (int32_t*)f->esp;
   
-  switch ( 0 /* retrive syscall number */ )
+  switch ( esp[0] )
   {
+    case SYS_HALT:
+    {
+      printf("Testing HALT\n");
+
+      power_off();
+      break;
+    }
+    case SYS_EXIT:
+    {
+      printf("Testing SYS_EXIT\n");
+      printf("%d\n", esp[1]); //Print the entered paratmeter for the exit call
+      thread_exit();
+      break;
+    }
     default:
     {
       printf ("Executed an unknown system call!\n");
@@ -57,5 +71,6 @@ syscall_handler (struct intr_frame *f)
       
       thread_exit ();
     }
+    
   }
 }
