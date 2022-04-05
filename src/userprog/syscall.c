@@ -48,6 +48,22 @@ syscall_handler (struct intr_frame *f)
   
   switch ( esp[0] )
   {
+    case SYS_READ:    //Argument: fd, buffer, size
+    {
+      if(esp[1] == 0) //STDIN_FILENO
+      {
+        for(int i=0; i<esp[3]; i++)
+        {
+          uint8_t tmp = input_getc();       //Returnerar uint8_t key
+          if(tmp == (uint8_t)'\r')
+            tmp = (uint8_t)'\n';
+
+          ((char*)esp[2])[i] = tmp;
+        }
+          f->eax = 1;
+      }
+      break;
+    }
     case SYS_HALT:
     {
       printf("Testing HALT\n");
