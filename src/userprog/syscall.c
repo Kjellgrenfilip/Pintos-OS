@@ -59,9 +59,26 @@ syscall_handler (struct intr_frame *f)
             tmp = (uint8_t)'\n';
 
           ((char*)esp[2])[i] = tmp;
+          const char * tmp_buf = (const char*)&tmp;
+          putbuf(tmp_buf, 1);
         }
           f->eax = 1;
       }
+      else if(esp[1] == 1)
+          f->eax = -1;
+      break;
+    }
+    case SYS_WRITE:
+    {
+      if(esp[1] == 1) //STDOUT_FILENO
+      {
+
+          putbuf((const char*)esp[2], esp[3]);
+         
+         f->eax = 1;
+      }
+      else if(esp[1] == 0)
+          f->eax = -1;
       break;
     }
     case SYS_HALT:
