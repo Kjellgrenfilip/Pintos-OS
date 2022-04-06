@@ -52,17 +52,19 @@ syscall_handler (struct intr_frame *f)
     {
       if(esp[1] == 0) //STDIN_FILENO
       {
+        int result = 0;
         for(int i=0; i<esp[3]; i++)
         {
           uint8_t tmp = input_getc();       //Returnerar uint8_t key
           if(tmp == (uint8_t)'\r')
             tmp = (uint8_t)'\n';
 
-          ((char*)esp[2])[i] = tmp;
-          const char * tmp_buf = (const char*)&tmp;
+          ((char*)esp[2])[i] = tmp;         //Hämta tecken från STDIN till buffer
+          const char * tmp_buf = (char *)&tmp; 
           putbuf(tmp_buf, 1);
+          result = i+1;      
         }
-          f->eax = 1;
+          f->eax = result;
       }
       else if(esp[1] == 1)
           f->eax = -1;
@@ -75,7 +77,7 @@ syscall_handler (struct intr_frame *f)
 
           putbuf((const char*)esp[2], esp[3]);
          
-         f->eax = 1;
+         f->eax = esp[3];
       }
       else if(esp[1] == 0)
           f->eax = -1;
