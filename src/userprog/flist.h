@@ -1,6 +1,9 @@
 #ifndef _MAP_H_
 #define _MAP_H_
 
+#include "../lib/kernel/list.h"
+#include <stdlib.h>
+
 /* Place code to keep track of your per-process open file table here.
  *
  * (The system-wide open file table exist as part of filesys/inode.c )
@@ -63,5 +66,33 @@
  * where to declare and initialize it correctly. In both cases, consider
  * what size limit that may be appropriate.
  */
+
+
+typedef struct file* value_t;
+typedef int key_t;
+
+struct association
+{
+    key_t key;
+    value_t value;
+    struct list_elem elem;  //Previous and next pointers
+};
+
+
+
+struct map
+{
+    struct list content;    //Head and tail
+    int next_key;
+};
+
+void map_init(struct map* m);
+
+key_t map_insert(struct map* m, value_t v);
+value_t map_find(struct map*, key_t k);
+value_t map_remove(struct map* m, key_t k);
+void map_for_each(struct map* m, void (*exec)(key_t k, value_t v, int aux), int aux);
+void map_remove_if(struct map* m, bool (*cond)(key_t k, value_t v, int aux), int aux);
+value_t pop_front(struct map*);
 
 #endif

@@ -14,12 +14,15 @@
 #include "userprog/process.h"
 #include "devices/input.h"
 
+struct map file_table;
+
 static void syscall_handler (struct intr_frame *);
 
 void
 syscall_init (void) 
 {
   intr_register_int (0x30, 3, INTR_ON, syscall_handler, "syscall");
+  map_init(&file_table);
 }
 
 
@@ -68,6 +71,17 @@ syscall_handler (struct intr_frame *f)
       }
       else if(esp[1] == 1)
           f->eax = -1;
+
+      else
+      {
+        struct file* file = map_find(&file_table, esp[1]);
+        if(file == NULL)
+          {
+            f->eax = -1;
+            break;
+          }
+        f->eax = file_read(file, (void*)esp[2], esp[3]);
+      }
       break;
     }
     case SYS_WRITE:
@@ -81,6 +95,17 @@ syscall_handler (struct intr_frame *f)
       }
       else if(esp[1] == 0)
           f->eax = -1;
+      else
+      {
+        struct file* file = map_find(&file_table, esp[1]);
+        if(file == NULL)
+          {
+            f->eax = -1;
+            break;
+          }
+        f->eax = file_write(file, (const void*)esp[2], esp[3]);
+      }
+
       break;
     }
     case SYS_HALT:
@@ -94,9 +119,100 @@ syscall_handler (struct intr_frame *f)
     {
       printf("Testing SYS_EXIT\n");
       printf("%d\n", esp[1]); //Print the entered paratmeter for the exit call
+      
+      struct file* file = pop_front(&file_table);
+
+      while(file != NULL)
+      {
+        file_close(file);
+        printf("Closed open file at exit");
+        file = pop_front(&file_table);
+      }
+
+      
       thread_exit();
       break;
     }
+    case SYS_CREATE:
+    {
+      f->eax = filesys_create((char*)esp[1], esp[2]);
+      /*{
+        f->eax = true;
+      }
+      else
+        f->eax = false;*/
+      break;
+    }
+    case SYS_OPEN:
+    {
+
+      struct file* open_f = filesys_open((char*)esp[1]);
+
+      if(open_f == NULL)
+      {
+        f->eax = -1;
+        break;
+      }
+      
+      f->eax = map_insert(&file_table, open_f);
+
+      break;
+    }
+    case SYS_CLOSE:
+    {
+      struct file* file = map_remove(&file_table, esp[1]);
+      if(file == NULL)
+      {
+        f->eax = -1;
+        break;
+      }
+      file_close(file);
+      break;
+    }
+    case SYS_REMOVE:
+    {
+      f->eax = filesys_remove((char*)esp[1]);
+      break;
+    }
+
+    case SYS_SEEK:
+    {
+      struct file* file = map_find(&file_table, esp[1]);
+        if(file == NULL)
+          {
+            f->eax = -1;
+            break;
+          }
+        if(file_length(file) > esp[2])
+            file_seek(file, esp[2]);
+        else
+          f->eax = file_length(file)-1;
+          
+        break;
+    }
+    case SYS_TELL:
+    {
+      struct file* file = map_find(&file_table, esp[1]);
+        if(file == NULL)
+          {
+            f->eax = -1;
+            break;
+          }
+        f->eax = file_tell(file);
+        break;
+    }
+    case SYS_FILESIZE:
+    {
+      struct file* file = map_find(&file_table, esp[1]);
+        if(file == NULL)
+          {
+            f->eax = -1;
+            break;
+          }
+      f->eax = file_length(file);
+      break;
+    }
+
     default:
     {
       printf ("Executed an unknown system call!\n");
