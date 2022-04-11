@@ -245,7 +245,22 @@ process_cleanup (void)
    * possibly before the printf is completed.)
    */
   printf("%s: exit(%d)\n", thread_name(), status);
-  
+   
+
+   //Stäng öppna filer
+
+   struct map* file_table = &(cur->file_table);
+   struct file* file = pop_front(file_table);
+
+   while(file != NULL)
+   {
+      file_close(file);
+      printf("Closed open file in cleanup\n");
+      file = pop_front(file_table);
+   }
+
+   ////////////////////////
+
   /* Destroy the current process's page directory and switch back
      to the kernel-only page directory. */
   if (pd != NULL) 
@@ -260,7 +275,10 @@ process_cleanup (void)
       cur->pagedir = NULL;
       pagedir_activate (NULL);
       pagedir_destroy (pd);
-    }  
+    }
+
+   
+     
   debug("%s#%d: process_cleanup() DONE with status %d\n",
         cur->name, cur->tid, status);
 }

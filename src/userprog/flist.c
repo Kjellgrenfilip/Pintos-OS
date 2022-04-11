@@ -7,6 +7,7 @@ void map_init(struct map* m)
 {
     list_init( &(m->content));
     m->next_key = 2;
+    m->size = 0;
 }
 
 key_t map_insert(struct map* m, value_t v)
@@ -16,7 +17,10 @@ key_t map_insert(struct map* m, value_t v)
     ass->key = m->next_key;
     m->next_key++;
     
+    m->size++;
+
     list_insert(&(m->content.tail), &(ass->elem));
+
     return ass->key;
 }
 
@@ -45,7 +49,9 @@ value_t map_remove(struct map* m, key_t k)
             {
                 value_t return_value = ass->value;
                 list_remove(e);      //Peka om pekarna
-                
+
+                m->size--;
+
                 if(ass != NULL)    
                     free(ass);           //Avallokera minne
                 return return_value; //returnera värdet
@@ -78,8 +84,7 @@ int aux)
           {
               
                 e = list_remove(e);      //Peka om pekarna
-                /*if(sizeof(*(ass->value)) != 0)
-                   free(ass->value);*/      
+                m->size--;
                 if(ass != NULL)    
                     free(ass);       //Avallokera minne
           }
@@ -96,6 +101,12 @@ value_t pop_front(struct map* m)
   if(list_empty(&(m->content)))
     return NULL;
   
+  m->size--;
   e = list_pop_front(&(m->content));
   return list_entry(e, struct association, elem)->value; 
+}
+
+int map_size(struct map* m)
+{
+  return m->size;
 }

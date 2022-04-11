@@ -82,6 +82,7 @@ struct association
 
 struct map
 {
+    int size;
     struct list content;    //Head and tail
     int next_key;
 };
@@ -94,5 +95,7 @@ value_t map_remove(struct map* m, key_t k);
 void map_for_each(struct map* m, void (*exec)(key_t k, value_t v, int aux), int aux);
 void map_remove_if(struct map* m, bool (*cond)(key_t k, value_t v, int aux), int aux);
 value_t pop_front(struct map*);
+
+int map_size(struct map*);
 
 #endif

@@ -14,15 +14,12 @@
 #include "userprog/process.h"
 #include "devices/input.h"
 
-struct map file_table;
-
 static void syscall_handler (struct intr_frame *);
 
 void
 syscall_init (void) 
 {
   intr_register_int (0x30, 3, INTR_ON, syscall_handler, "syscall");
-  map_init(&file_table);
 }
 
 
@@ -44,10 +41,16 @@ const int argc[] = {
   0, 1
 };
 
+//File table i thread
+//Stäng filer i process cleanup
+
+
 static void
 syscall_handler (struct intr_frame *f) 
 {
-  int32_t* esp = (int32_t*)f->esp;
+  int32_t* esp = (int32_t*)f->esp;    //Stackpekare
+
+  struct map* file_table = &(thread_current()->file_table);   //Hämta pekare till file table från tråden
   
   switch ( esp[0] )
   {
@@ -69,12 +72,12 @@ syscall_handler (struct intr_frame *f)
         }
           f->eax = result;
       }
-      else if(esp[1] == 1)
+      else if(esp[1] == 1)    //Får inte läsa från STDOU_FILENO
           f->eax = -1;
 
-      else
+      else          //Vanlig fil
       {
-        struct file* file = map_find(&file_table, esp[1]);
+        struct file* file = map_find(file_table, esp[1]);
         if(file == NULL)
           {
             f->eax = -1;
@@ -97,7 +100,7 @@ syscall_handler (struct intr_frame *f)
           f->eax = -1;
       else
       {
-        struct file* file = map_find(&file_table, esp[1]);
+        struct file* file = map_find(file_table, esp[1]);
         if(file == NULL)
           {
             f->eax = -1;
@@ -117,18 +120,8 @@ syscall_handler (struct intr_frame *f)
     }
     case SYS_EXIT:
     {
-      printf("Testing SYS_EXIT\n");
-      printf("%d\n", esp[1]); //Print the entered paratmeter for the exit call
-      
-      struct file* file = pop_front(&file_table);
-
-      while(file != NULL)
-      {
-        file_close(file);
-        printf("Closed open file at exit");
-        file = pop_front(&file_table);
-      }
-
+      printf("SYS_EXIT with code ");
+      printf("%d\n", esp[1]);     //Print the entered paratmeter for the exit call
       
       thread_exit();
       break;
@@ -145,6 +138,12 @@ syscall_handler (struct intr_frame *f)
     }
     case SYS_OPEN:
     {
+      
+      if(map_size(file_table) >= 16)
+      {
+        f->eax = -1;
+        break;
+      }
 
       struct file* open_f = filesys_open((char*)esp[1]);
 
@@ -154,13 +153,13 @@ syscall_handler (struct intr_frame *f)
         break;
       }
       
-      f->eax = map_insert(&file_table, open_f);
+      f->eax = map_insert(file_table, open_f);
 
       break;
     }
     case SYS_CLOSE:
     {
-      struct file* file = map_remove(&file_table, esp[1]);
+      struct file* file = map_remove(file_table, esp[1]);
       if(file == NULL)
       {
         f->eax = -1;
@@ -177,7 +176,7 @@ syscall_handler (struct intr_frame *f)
 
     case SYS_SEEK:
     {
-      struct file* file = map_find(&file_table, esp[1]);
+      struct file* file = map_find(file_table, esp[1]);
         if(file == NULL)
           {
             f->eax = -1;
@@ -192,7 +191,7 @@ syscall_handler (struct intr_frame *f)
     }
     case SYS_TELL:
     {
-      struct file* file = map_find(&file_table, esp[1]);
+      struct file* file = map_find(file_table, esp[1]);
         if(file == NULL)
           {
             f->eax = -1;
@@ -203,7 +202,7 @@ syscall_handler (struct intr_frame *f)
     }
     case SYS_FILESIZE:
     {
-      struct file* file = map_find(&file_table, esp[1]);
+      struct file* file = map_find(file_table, esp[1]);
         if(file == NULL)
           {
             f->eax = -1;

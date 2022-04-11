@@ -103,6 +103,8 @@ struct thread
 
     /* Owned by thread.c. */
     unsigned magic;                     /* Detects stack overflow. */
+
+    struct map file_table;              //Process open file table
   };
 
 /* If false (default), use round-robin scheduler.
