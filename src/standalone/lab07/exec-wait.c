@@ -15,14 +15,16 @@ int do_work(int param);
 struct running_thread {
   // Den parameter som ska skickas till "do_work".
   int param;
-
   // Om tråden är klar: Resultatet som "do_work" har beräknat.
   int result;
+  struct semaphore sem;
 };
 
 // Första funktionen som körs i nya trådar.
 void thread_main(struct running_thread *data) {
   data->result = do_work(data->param);
+  //Klara med resultat, SEMA upp
+  sema_up(&(data->sem));
 }
 
 // Starta en ny tråd som kör funktionen "do_work" med "param" som
@@ -33,7 +35,7 @@ struct running_thread *exec(int param) {
   // Allokera en ny struktur för att hålla reda på tråden och initiera den.
   struct running_thread *data = malloc(sizeof(struct running_thread));
   data->param = param;
-
+  sema_init(&(data->sem), 0);
   // Skapa en ny tråd som kör "thread_main" och ge den tillgång till "data".
   thread_new(&thread_main, data);
 
@@ -45,6 +47,9 @@ struct running_thread *exec(int param) {
 // gång för varje anrop till "exec".
 int wait(struct running_thread *data) {
   // Hämta resultatet, frigör minnet och returnera resultatet.
+
+  //Sema_down , vänta på resultat  
+  sema_down(&(data->sem));
   int result = data->result;
   free(data);
   return result;
@@ -76,11 +81,17 @@ int do_work(int param) {
 int main(void) {
   struct running_thread *a = exec(10);
   struct running_thread *b = exec(100);
+  struct running_thread *k = exec(2);
+  struct running_thread *d = exec(3);
+  struct running_thread *e = exec(9);
 
   int c = do_work(5);
 
   printf("Result for 'a': %d\n", wait(a));
   printf("Result for 'b': %d\n", wait(b));
+  printf("Result for 'b': %d\n", wait(k));
+  printf("Result for 'b': %d\n", wait(d));
+  printf("Result for 'b': %d\n", wait(e));
   printf("Result for 'c': %d\n", c);
 
   return 0;

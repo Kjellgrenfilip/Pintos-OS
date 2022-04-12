@@ -72,7 +72,7 @@ syscall_handler (struct intr_frame *f)
         }
           f->eax = result;
       }
-      else if(esp[1] == STDOUT_FILENO)    //Får inte läsa från STDOU_FILENO
+      else if(esp[1] == STDOUT_FILENO)    //Får inte läsa från STDOUT_FILENO
           f->eax = -1;
 
       else          //Vanlig fil
