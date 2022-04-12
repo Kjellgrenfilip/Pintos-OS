@@ -255,7 +255,7 @@ process_cleanup (void)
    while(file != NULL)
    {
       file_close(file);
-      printf("Closed open file in cleanup\n");
+      printf("Closed open file(s) in cleanup\n");
       file = pop_front(file_table);
    }
 

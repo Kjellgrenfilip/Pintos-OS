@@ -101,7 +101,7 @@ int main(int argc, char* argv[])
     int success = JUNK;
 
     printf ("Will try to create 'test.txt'\n");
-    success = create("test.txt", SIZE);
+    success = create("test.txt", SIZE );
     verify ( success != JUNK && success );
   }
   end ( "* -------------------- press enter ---------------------- *" );

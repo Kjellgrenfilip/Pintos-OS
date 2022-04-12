@@ -56,7 +56,7 @@ syscall_handler (struct intr_frame *f)
   {
     case SYS_READ:    //Argument: fd, buffer, size
     {
-      if(esp[1] == 0) //STDIN_FILENO
+      if(esp[1] == STDIN_FILENO) //STDIN_FILENO
       {
         int result = 0;
         for(int i=0; i<esp[3]; i++)
@@ -65,14 +65,14 @@ syscall_handler (struct intr_frame *f)
           if(tmp == (uint8_t)'\r')
             tmp = (uint8_t)'\n';
 
-          ((char*)esp[2])[i] = tmp;         //Hämta tecken från STDIN till buffer
-          const char * tmp_buf = (char *)&tmp; 
-          putbuf(tmp_buf, 1);
+          ((char*)esp[2])[i] = tmp;         //Lägg till det hämtade tecknet i buffern
+          const char * tmp_buf = (char*)&tmp; //Casta tmp till char*
+          putbuf(tmp_buf, 1);                   //Skriv ut det hämtade tecknet på skärmen
           result = i+1;      
         }
           f->eax = result;
       }
-      else if(esp[1] == 1)    //Får inte läsa från STDOU_FILENO
+      else if(esp[1] == STDOUT_FILENO)    //Får inte läsa från STDOU_FILENO
           f->eax = -1;
 
       else          //Vanlig fil
@@ -83,20 +83,21 @@ syscall_handler (struct intr_frame *f)
             f->eax = -1;
             break;
           }
-        f->eax = file_read(file, (void*)esp[2], esp[3]);
+        f->eax = file_read(file, (void*)esp[2], esp[3]); // file_read hanterar så att man inte kan läsa mer än vad som finns i filen.
       }
       break;
     }
+    
     case SYS_WRITE:
     {
-      if(esp[1] == 1) //STDOUT_FILENO
+      if(esp[1] == STDOUT_FILENO) 
       {
 
           putbuf((const char*)esp[2], esp[3]);
          
          f->eax = esp[3];
       }
-      else if(esp[1] == 0)
+      else if(esp[1] == STDIN_FILENO)
           f->eax = -1;
       else
       {
@@ -106,18 +107,20 @@ syscall_handler (struct intr_frame *f)
             f->eax = -1;
             break;
           }
-        f->eax = file_write(file, (const void*)esp[2], esp[3]);
+        f->eax = file_write(file, (const void*)esp[2], esp[3]);//file_write hanterar så att man inte kan skriva utanför storleken på filen.
       }
 
       break;
     }
+    
     case SYS_HALT:
     {
-      printf("Testing HALT\n");
+      printf("SYS_HALT\n");
 
       power_off();
       break;
     }
+    
     case SYS_EXIT:
     {
       printf("SYS_EXIT with code ");
@@ -126,20 +129,21 @@ syscall_handler (struct intr_frame *f)
       thread_exit();
       break;
     }
+    
     case SYS_CREATE:
     {
-      f->eax = filesys_create((char*)esp[1], esp[2]);
-      /*{
-        f->eax = true;
-      }
-      else
-        f->eax = false;*/
+      if(esp[2] <= 0)
+        f->eax = false;
+      
+      f->eax = filesys_create((char*)esp[1], esp[2]); //filesys_create returnerar true om vi lyckade skapa filen. Annars false.
+      
       break;
     }
+    
     case SYS_OPEN:
     {
       
-      if(map_size(file_table) >= 16)
+      if(map_size(file_table) >= 16) //Möjligtvis låta mappen själv hålla koll? 
       {
         f->eax = -1;
         break;
@@ -157,38 +161,45 @@ syscall_handler (struct intr_frame *f)
 
       break;
     }
+    
     case SYS_CLOSE:
     {
-      struct file* file = map_remove(file_table, esp[1]);
+      struct file* file = map_remove(file_table, esp[1]); //map_remove returnerar filen om den finns. Annars NULL
       if(file == NULL)
       {
-        f->eax = -1;
+        f->eax = -1; // Kanske inte behövs?
         break;
       }
       file_close(file);
       break;
     }
+    
     case SYS_REMOVE:
     {
-      f->eax = filesys_remove((char*)esp[1]);
+      f->eax = filesys_remove((char*)esp[1]); //Returnerar false om filen inte fanns. True om den fanns och togs bort.
       break;
     }
 
     case SYS_SEEK:
     {
-      struct file* file = map_find(file_table, esp[1]);
-        if(file == NULL)
+      struct file* file = map_find(file_table, esp[1]); 
+        if(file == NULL)  //Finns den angivna filen öppen?
           {
-            f->eax = -1;
+           // f->eax = -1;   //seek() har inget returvärde.....
             break;
           }
         if(file_length(file) > esp[2])
+        {
             file_seek(file, esp[2]);
+        }
         else
-          f->eax = file_length(file)-1;
-          
+          {
+          file_seek(file, file_length(file)); //Om det angivna seek-värdet är större än filen, seeka till end of file.
+          }
+
         break;
     }
+    
     case SYS_TELL:
     {
       struct file* file = map_find(file_table, esp[1]);
@@ -200,6 +211,7 @@ syscall_handler (struct intr_frame *f)
         f->eax = file_tell(file);
         break;
     }
+    
     case SYS_FILESIZE:
     {
       struct file* file = map_find(file_table, esp[1]);

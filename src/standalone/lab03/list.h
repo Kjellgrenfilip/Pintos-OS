@@ -119,11 +119,14 @@ struct list_elem *list_prev (struct list_elem *);
 struct list_elem *list_rend (struct list *);
 
 struct list_elem *list_head (struct list *);
-struct list_elem *list_tail (struct list *);value_t map_find(struct map*, key_t k);
+struct list_elem *list_tail (struct list *);
+
 void list_push_front (struct list *, struct list_elem *);
 void list_push_back (struct list *, struct list_elem *);
 
 /* List removal. */
+void
+list_insert (struct list_elem *before, struct list_elem *elem);
 struct list_elem *list_remove (struct list_elem *);
 struct list_elem *list_pop_front (struct list *);
 struct list_elem *list_pop_back (struct list *);
