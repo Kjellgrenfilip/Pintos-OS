@@ -196,8 +196,15 @@ thread_create (const char *name, int priority,
 
   /* Allows to simulate a failure in palloc_get_page below. */
   if (DEBUG_thread_create_simulate_fail())
-    return TID_ERROR;
-    
+    {
+      debug("%s#%d: thread_create(\"%s\", ...) RETURNS %d\n",
+        thread_current()->name,
+        thread_current()->tid,
+        name, TID_ERROR);
+      
+      return TID_ERROR;
+    }
+  
   /* Allocate thread. */
   t = palloc_get_page (PAL_ZERO);
   if (t == NULL)

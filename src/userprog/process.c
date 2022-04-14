@@ -50,7 +50,9 @@ void process_print_list()
 
 struct parameters_to_start_process
 {
-  char* command_line;
+   char* command_line;
+   int pid;
+   struct semaphore sema;
 };
 
 static void
@@ -85,16 +87,24 @@ process_execute (const char *command_line)
 
   strlcpy_first_word (debug_name, command_line, 64);
   
+
+   sema_init(&(arguments.sema), 0);
+
   /* SCHEDULES function `start_process' to run (LATER) */
   thread_id = thread_create (debug_name, PRI_DEFAULT,
                              (thread_func*)start_process, &arguments);
-
-  process_id = thread_id;
+   
+   if(thread_id != TID_ERROR)          //Vänta bara på start_process om tråden skapades
+   {
+      arguments.pid = thread_id;          
+      sema_down(&(arguments.sema));    
+      process_id = arguments.pid;      //Om load misslyckas ändrar start_process till -1
+   }
+  
 
   /* AVOID bad stuff by turning off. YOU will fix this! */
-  power_off();
-  
-  
+  //power_off();
+
   /* WHICH thread may still be using this right now? */
   free(arguments.command_line);
 
@@ -164,12 +174,17 @@ start_process (struct parameters_to_start_process* parameters)
     
 //    dump_stack ( PHYS_BASE + 15, PHYS_BASE - if_.esp + 16 );
 
+      //All ok now
+      //sema_up
+      
   }
 
   debug("%s#%d: start_process(\"%s\") DONE\n",
         thread_current()->name,
         thread_current()->tid,
         parameters->command_line);
+
+   sema_up(&(parameters->sema));
   
   
   /* If load fail, quit. Load may fail for several reasons.
@@ -180,7 +195,9 @@ start_process (struct parameters_to_start_process* parameters)
   */
   if ( ! success )
   {
-    thread_exit ();
+     //Not ok, sema_up
+      parameters->pid = -1;
+      thread_exit ();
   }
   
   /* Start the user process by simulating a return from an interrupt,
