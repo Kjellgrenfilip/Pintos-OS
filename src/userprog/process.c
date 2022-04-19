@@ -89,9 +89,11 @@ process_execute (const char *command_line)
   
 
    sema_init(&(arguments.sema), 0);
+   
+   // ALTERNATIVT 1: Lägg till process i listan här
 
   /* SCHEDULES function `start_process' to run (LATER) */
-  thread_id = thread_create (debug_name, PRI_DEFAULT,
+   thread_id = thread_create (debug_name, PRI_DEFAULT,
                              (thread_func*)start_process, &arguments);
    
    if(thread_id != TID_ERROR)          //Vänta bara på start_process om tråden skapades
@@ -178,6 +180,7 @@ start_process (struct parameters_to_start_process* parameters)
       //sema_up
       
   }
+  
 
   debug("%s#%d: start_process(\"%s\") DONE\n",
         thread_current()->name,

@@ -1,6 +1,8 @@
 #ifndef _PLIST_H_
 #define _PLIST_H_
 
+#include "../lib/kernel/list.h"
+#include <stdlib.h>
 
 /* Place functions to handle a running process here (process list).
    
@@ -28,6 +30,41 @@
      clean, readable format.
      
  */
+typedef struct process_info* value_p;
+typedef int pid_t;
 
+
+struct process_info
+{
+  bool free;
+  pid_t parent_id;
+  int status_code;
+  bool alive;
+  bool parent_alive;
+};
+
+struct association
+{
+    pid_t pid;
+    value_p value;
+    struct list_elem elem;  //Previous and next pointers
+};
+
+struct map
+{
+    int size;
+    struct list content;    //Head and tail
+    int next_pid;
+};
+
+void process_list_init(struct map* m);
+
+pid_t process_list_insert(struct map* m, value_p v);
+value_p process_list_find(struct map*, pid_t k);
+value_p process_list_remove(struct map* m, pid_t k);
+void process_list_print();
+
+
+int process_list_size(struct map*);
 
 #endif
