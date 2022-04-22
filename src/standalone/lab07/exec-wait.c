@@ -81,18 +81,18 @@ int do_work(int param) {
 int main(void) {
   struct running_thread *a = exec(10);
   struct running_thread *b = exec(100);
-  struct running_thread *k = exec(2);
+  struct running_thread *c = exec(2);
   struct running_thread *d = exec(3);
   struct running_thread *e = exec(9);
 
-  int c = do_work(5);
+  int f = do_work(5);
 
   printf("Result for 'a': %d\n", wait(a));
   printf("Result for 'b': %d\n", wait(b));
-  printf("Result for 'b': %d\n", wait(k));
-  printf("Result for 'b': %d\n", wait(d));
-  printf("Result for 'b': %d\n", wait(e));
-  printf("Result for 'c': %d\n", c);
+  printf("Result for 'c': %d\n", wait(c));
+  printf("Result for 'd': %d\n", wait(d));
+  printf("Result for 'e': %d\n", wait(e));
+  printf("Result for 'f': %d\n", f);
 
   return 0;
 }
