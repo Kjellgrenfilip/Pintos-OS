@@ -43,28 +43,28 @@ struct process_info
   bool parent_alive;
 };
 
-struct association
+struct p_association
 {
     pid_t pid;
     value_p value;
     struct list_elem elem;  //Previous and next pointers
 };
 
-struct map
+struct p_map
 {
     int size;
     struct list content;    //Head and tail
     int next_pid;
 };
 
-void process_list_init(struct map* m);
+void process_list_init(struct p_map* m);
 
-pid_t process_list_insert(struct map* m, value_p v);
-value_p process_list_find(struct map*, pid_t k);
-value_p process_list_remove(struct map* m, pid_t k);
-void process_list_print();
+pid_t process_list_insert(struct p_map* m, value_p v);
+value_p process_list_find(struct p_map*, pid_t k);
+value_p process_list_remove(struct p_map* m, pid_t k);
+//void process_list_print();
 
 
-int process_list_size(struct map*);
+int process_list_size(struct p_map*);
 
 #endif

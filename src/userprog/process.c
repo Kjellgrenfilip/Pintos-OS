@@ -64,6 +64,12 @@ start_process(struct parameters_to_start_process* parameters) NO_RETURN;
    be scheduled (and may even exit) before process_execute() returns.
    Returns the new process's thread id, or TID_ERROR if the thread
    cannot be created. */
+
+//Var lägger vi in process i listan? Start_process?? kan va rimligt
+//Var lägger vi listan? static i process.h/process.c???  Oklart
+//Hur initierar vi listan? kanske i thread_init?  KANSKE någonstans i process.c?
+// process_id == thread_id ???? eller process_id == list_index   TESTA ER FRAM
+
 int
 process_execute (const char *command_line) 
 {
@@ -96,7 +102,11 @@ process_execute (const char *command_line)
    thread_id = thread_create (debug_name, PRI_DEFAULT,
                              (thread_func*)start_process, &arguments);
    
-   if(thread_id != TID_ERROR)          //Vänta bara på start_process om tråden skapades
+   if(thread_id == TID_ERROR)          
+   {
+      process_id = -1;
+   }
+   else                       //Vänta bara på start_process om tråden skapades
    {
       arguments.pid = thread_id;          
       sema_down(&(arguments.sema));    
@@ -176,11 +186,12 @@ start_process (struct parameters_to_start_process* parameters)
     
 //    dump_stack ( PHYS_BASE + 15, PHYS_BASE - if_.esp + 16 );
 
-      //All ok now
-      //sema_up
-      
   }
   
+  if(!success)
+  {
+     parameters->pid = -1;
+  }
 
   debug("%s#%d: start_process(\"%s\") DONE\n",
         thread_current()->name,
@@ -198,11 +209,11 @@ start_process (struct parameters_to_start_process* parameters)
   */
   if ( ! success )
   {
-     //Not ok, sema_up
-      parameters->pid = -1;
       thread_exit ();
   }
   
+   
+
   /* Start the user process by simulating a return from an interrupt,
      implemented by intr_exit (in threads/intr-stubs.S). Because
      intr_exit takes all of its arguments on the stack in the form of
