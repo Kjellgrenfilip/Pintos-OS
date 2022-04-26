@@ -3,6 +3,7 @@
 
 #include "../lib/kernel/list.h"
 #include <stdlib.h>
+#include "../threads/synch.h"
 
 /* Place functions to handle a running process here (process list).
    
@@ -36,11 +37,11 @@ typedef int pid_t;
 
 struct process_info
 {
-  bool free;
   pid_t parent_id;
   int status_code;
   bool alive;
   bool parent_alive;
+  struct semaphore sema;
 };
 
 struct p_association
@@ -59,11 +60,11 @@ struct p_map
 
 void process_list_init(struct p_map* m);
 
-pid_t process_list_insert(struct p_map* m, value_p v);
+pid_t process_list_insert(struct p_map* m, value_p v, pid_t pid);
 value_p process_list_find(struct p_map*, pid_t k);
 value_p process_list_remove(struct p_map* m, pid_t k);
-//void process_list_print();
-
+void process_list_print(struct p_map*);
+void set_parent_dead(struct p_map* m, pid_t curr);
 
 int process_list_size(struct p_map*);
 

@@ -3,7 +3,7 @@
 #include "userprog/syscall.h"
 #include "threads/interrupt.h"
 #include "threads/thread.h"
-
+#include "../devices/timer.h"
 /* header files you probably need, they are not used yet */
 #include <string.h>
 #include "filesys/filesys.h"
@@ -123,9 +123,10 @@ syscall_handler (struct intr_frame *f)
     
     case SYS_EXIT:
     {
-      printf("SYS_EXIT with code ");
-      printf("%d\n", esp[1]);     //Print the entered paratmeter for the exit call
+      // printf("SYS_EXIT with code ");
+     //printf("%d\n", esp[1]);     //Print the entered paratmeter for the exit call
       
+      process_exit((int)(esp[1]));
       thread_exit();
       break;
     }
@@ -223,7 +224,28 @@ syscall_handler (struct intr_frame *f)
       f->eax = file_length(file);
       break;
     }
+    case SYS_EXEC:
+    {
+      f->eax = process_execute((char*)esp[1]);
+      break;
+    }
+    case SYS_PLIST:
+    {
+      process_print_list();
+      break;
+    }
 
+    case SYS_SLEEP:
+    {
+      timer_msleep((int)esp[1]);
+      break;
+    }
+
+    case SYS_WAIT:
+    {
+      f->eax = process_wait((int)esp[1]);
+      break;
+    }
     default:
     {
       printf ("Executed an unknown system call!\n");

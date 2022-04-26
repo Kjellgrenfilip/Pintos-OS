@@ -23,11 +23,12 @@ int main(void)
 {
   printf("Starting the fast child...\n");
   int pid = exec("fast 10");
-
+  printf("Fast 10 have pid: %d \n",pid);
   // Wait a little while to make sure that the child terminated.
   sleep(1000);
 
   int result = wait(pid);
+  plist();
   if (result != 10)
   {
     printf("ERROR: Expected 10 from wait, but got: %d\n", result);

@@ -34,6 +34,7 @@ void seek (int fd, unsigned position);
 unsigned tell (int fd);
 void close (int fd);
 
+
 /* Memory mapping system calls. */
 mapid_t mmap (int fd, void *addr);
 void munmap (mapid_t);
@@ -44,6 +45,9 @@ bool mkdir (const char *dir);
 bool readdir (int fd, char name[READDIR_MAX_LEN + 1]);
 bool isdir (int fd);
 int inumber (int fd);
+
+void plist(void);
+void sleep(int);
 
 
 #endif /* lib/user/syscall.h */

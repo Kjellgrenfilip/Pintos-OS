@@ -1,0 +1,185 @@
+Copying ../examples/longrun_nowait into /tmp/qrowe3SP5v.dsk...
+Copying ../examples/generic_parent into /tmp/qrowe3SP5v.dsk...
+Copying ../examples/busy into /tmp/qrowe3SP5v.dsk...
+Writing command line to /tmp/CMvzbt4s4x.dsk...
+qemu-system-i386 -drive file=/tmp/CMvzbt4s4x.dsk,index=0,format=raw -drive file=/tmp/SPuLTw45hI.dsk,index=1,format=raw -drive file=/tmp/qrowe3SP5v.dsk,index=2,format=raw -m 4 -net none -monitor null -nographic -device isa-debug-exit,iobase=0xf4,iosize=0x04
+c[?7l[2J[0mSeaBIOS (version 1.13.0-1ubuntu1.1)
+Booting from Hard Disk..Kernel command line: -f -q put nowait put generic_parent put dummy run 'nowait 1 5'
+Pintos booting with 3,968 kB RAM...
+356 pages available in kernel pool.
+355 pages available in user pool.
+# main#1: thread_create("idle", ...) RETURNS 2
+Calibrating timer... 523,776,000 loops/s.
+hd0:0: detected 169 sector (84 kB) disk, model "QEMU HARDDISK", serial "QM00001"
+hd0:1: detected 4,032 sector (1 MB) disk, model "QEMU HARDDISK", serial "QM00002"
+hd1:0: detected 293 sector (146 kB) disk, model "QEMU HARDDISK", serial "QM00003"
+Formatting file system...done.
+Boot complete.
+Putting 'nowait' into the file system...
+Putting 'generic_parent' into the file system...
+Putting 'dummy' into the file system...
+Executing 'nowait 1 5':
+# main#1: process_execute("nowait 1 5") ENTERED
+# main#1: thread_create("nowait", ...) RETURNS 3
+# nowait#3: start_process("nowait 1 5") ENTERED
+# nowait#3: start_process(...): load returned 1
+# nowait#3: start_process("nowait 1 5") DONE
+# main#1: process_execute("nowait 1 5") RETURNS 3
+# main#1: process_wait(3) ENTERED
+# main#1: process_wait(3) RETURNS -1
+Execution of 'nowait 1 5' complete.
+# Preparing to power off...
+ERROR: Main thread about to poweroff with 2 other threads still running!
+ERROR: Check your implementation of process_execute() and process_wait().
+Will try to start a total of 5 processes in groups of 1
+# nowait#3: process_execute("generic_parent dummy 0 1") ENTERED
+# nowait#3: thread_create("generic_parent", ...) RETURNS 4
+# generic_parent#4: start_process("generic_parent dummy 0 1") ENTERED
+# generic_parent#4: start_process(...): load returned 1
+# generic_parent#4: start_process("generic_parent dummy 0 1") DONE
+# nowait#3: process_execute("generic_parent dummy 0 1") RETURNS 4
+PID   P_PID    STATUS    ALIVE   P_ALIVE:
+3 1 -1072578484 1 1 
+4 3 -1072578468 1 1 
+Now entering busy-loop to let some processes finish
+# nowait#3: process_execute("generic_parent dummy 1 1") ENTERED
+# nowait#3: thread_create("generic_parent", ...) RETURNS 5
+# generic_parent#4: process_execute("dummy 0") ENTERED
+# generic_parent#4: thread_create("dummy", ...) RETURNS 6
+# generic_parent#5: start_process("generic_parent dummy 1 1") ENTERED
+# dummy#6: start_process("dummy 0") ENTERED
+load: dummy: open failed
+# dummy#6: start_process(...): load returned 0
+# dummy#6: start_process("dummy 0") DONE
+# dummy#6: process_cleanup() ENTERED
+dummy: exit(-1)
+# dummy#6: process_cleanup() DONE with status -1
+# generic_parent#4: process_execute("dummy 0") RETURNS -1
+SYS_EXIT with code 1
+ERROR: Main thread about to poweroff with 4 other threads still running!
+ERROR: Check your implementation of process_execute() and process_wait().
+# generic_parent#4: process_cleanup() ENTERED
+generic_parent: exit(-1)
+ERROR: Main thread about to poweroff with 3 other threads still running!
+ERROR: Check your implementation of process_execute() and process_wait().
+# generic_parent#4: process_cleanup() DONE with status -1
+# generic_parent#5: start_process(...): load returned 1
+# generic_parent#5: start_process("generic_parent dummy 1 1") DONE
+# generic_parent#5: process_execute("dummy 1") ENTERED
+# generic_parent#5: thread_create("dummy", ...) RETURNS 7
+# nowait#3: process_execute("generic_parent dummy 1 1") RETURNS 5
+PID   P_PID    STATUS    ALIVE   P_ALIVE:
+3 1 -1072578484 1 1 
+4 3 -1072578468 0 1 
+5 3 -1072578452 1 1 
+Now entering busy-loop to let some processes finish
+# dummy#7: start_process("dummy 1") ENTERED
+# nowait#3: process_execute("generic_parent dummy 2 1") ENTERED
+# nowait#3: thread_create("generic_parent", ...) RETURNS 8
+# generic_parent#8: start_process("generic_parent dummy 2 1") ENTERED
+# dummy#7: start_process(...): load returned 1
+# dummy#7: start_process("dummy 1") DONE
+SYS_EXIT with code 1
+# dummy#7: process_cleanup() ENTERED
+dummy: exit(-1)
+# dummy#7: process_cleanup() DONE with status -1
+# generic_parent#5: process_execute("dummy 1") RETURNS 7
+SYS_EXIT with code 2
+# generic_parent#5: process_cleanup() ENTERED
+generic_parent: exit(-1)
+ERROR: Main thread about to poweroff with 3 other threads still running!
+ERROR: Check your implementation of process_execute() and process_wait().
+# generic_parent#5: process_cleanup() DONE with status -1
+# generic_parent#8: start_process(...): load returned 1
+# generic_parent#8: start_process("generic_parent dummy 2 1") DONE
+# nowait#3: process_execute("generic_parent dummy 2 1") RETURNS 8
+PID   P_PID    STATUS    ALIVE   P_ALIVE:
+3 1 -1072578484 1 1 
+4 3 -1072578468 0 1 
+5 3 -1072578452 0 1 
+7 5 -1072578372 0 0 
+8 3 -1072578420 1 1 
+Now entering busy-loop to let some processes finish
+# generic_parent#8: process_execute("dummy 2") ENTERED
+# generic_parent#8: thread_create("dummy", ...) RETURNS 9
+# nowait#3: process_execute("generic_parent dummy 3 1") ENTERED
+# nowait#3: thread_create("generic_parent", ...) RETURNS 10
+# dummy#9: start_process("dummy 2") ENTERED
+# generic_parent#10: start_process("generic_parent dummy 3 1") ENTERED
+load: generic_parent: open failed
+# generic_parent#10: start_process(...): load returned 0
+# generic_parent#10: start_process("generic_parent dummy 3 1") DONE
+# generic_parent#10: process_cleanup() ENTERED
+generic_parent: exit(-1)
+# generic_parent#10: process_cleanup() DONE with status -1
+# nowait#3: process_execute("generic_parent dummy 3 1") RETURNS -1
+PID   P_PID    STATUS    ALIVE   P_ALIVE:
+3 1 -1072578484 1 1 
+4 3 -1072578468 0 1 
+5 3 -1072578452 0 1 
+7 5 -1072578372 0 0 
+8 3 -1072578420 1 1 
+Now entering busy-loop to let some processes finish
+ERROR: Main thread about to poweroff with 4 other threads still running!
+ERROR: Check your implementation of process_execute() and process_wait().
+# nowait#3: process_execute("generic_parent dummy 4 1") ENTERED
+# nowait#3: thread_create("generic_parent", ...) RETURNS 11
+# generic_parent#11: start_process("generic_parent dummy 4 1") ENTERED
+# dummy#9: start_process(...): load returned 1
+# dummy#9: start_process("dummy 2") DONE
+SYS_EXIT with code 2
+# dummy#9: process_cleanup() ENTERED
+dummy: exit(-1)
+# dummy#9: process_cleanup() DONE with status -1
+# generic_parent#8: process_execute("dummy 2") RETURNS 9
+SYS_EXIT with code 3
+ERROR: Main thread about to poweroff with 4 other threads still running!
+ERROR: Check your implementation of process_execute() and process_wait().
+# generic_parent#8: process_cleanup() ENTERED
+generic_parent: exit(-1)
+ERROR: Main thread about to poweroff with 3 other threads still running!
+ERROR: Check your implementation of process_execute() and process_wait().
+# generic_parent#8: process_cleanup() DONE with status -1
+# generic_parent#11: start_process(...): load returned 1
+# generic_parent#11: start_process("generic_parent dummy 4 1") DONE
+# nowait#3: process_execute("generic_parent dummy 4 1") RETURNS 11
+PID   P_PID    STATUS    ALIVE   P_ALIVE:
+3 1 -1072578484 1 1 
+4 3 -1072578468 0 1 
+5 3 -1072578452 0 1 
+7 5 -1072578372 0 0 
+8 3 -1072578420 0 1 
+9 8 -1072578324 0 0 
+11 3 -1072578308 1 1 
+Now entering busy-loop to let some processes finish
+# generic_parent#11: process_execute("dummy 4") ENTERED
+# generic_parent#11: thread_create("dummy", ...) RETURNS 12
+# dummy#12: start_process("dummy 4") ENTERED
+SYS_EXIT with code 0
+# nowait#3: process_cleanup() ENTERED
+nowait: exit(-1)
+ERROR: Main thread about to poweroff with 3 other threads still running!
+ERROR: Check your implementation of process_execute() and process_wait().
+# nowait#3: process_cleanup() DONE with status -1
+# dummy#12: start_process(...): load returned 1
+# dummy#12: start_process("dummy 4") DONE
+SYS_EXIT with code 4
+# dummy#12: process_cleanup() ENTERED
+dummy: exit(-1)
+# dummy#12: process_cleanup() DONE with status -1
+# generic_parent#11: process_execute("dummy 4") RETURNS 12
+SYS_EXIT with code 5
+ERROR: Main thread about to poweroff with 2 other threads still running!
+ERROR: Check your implementation of process_execute() and process_wait().
+# generic_parent#11: process_cleanup() ENTERED
+generic_parent: exit(-1)
+Timer: 1000 interrupts per second
+Timer: 680 ticks
+Thread: 44 idle ticks, 446 kernel ticks, 191 user ticks
+hd0:0: 0 reads, 0 writes
+hd0:1: 341 reads, 598 writes
+hd1:0: 293 reads, 0 writes
+Console: 8116 characters output
+Keyboard: 0 keys pressed
+Exception: 0 page faults
+Powering off...

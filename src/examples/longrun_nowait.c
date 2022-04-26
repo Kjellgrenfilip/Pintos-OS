@@ -1,6 +1,6 @@
 /* klaar@ida
 
-   pintos -v -k --fs-disk=2 --qemu -p ../examples/longrun_nowait -a nowait -p ../examples/generic_parent -a generic_parent -p ../examples/busy -a dummy -- -f -q run 'nowait 10 50'
+   pintos -v -k --fs-disk=2 --qemu -p ../examples/longrun_nowait -a nowait -p ../examples/generic_parent -a generic_parent -p ../examples/busy -a dummy -- -f -q run 'nowait 1 5'
 
    Start a lot of processes and let them finish to test if we
    eventually run out of process slots.
@@ -75,6 +75,8 @@ int main(int argc, char* argv[])
   printf("Will try to start a total of %d processes in groups of %d\n",
          simul * repeat, simul);
   
+  //sleep(5000);
+
   for (j = 0; j < repeat; ++j)
   {
     /* you may have to increase the multiple to more than 5 */
@@ -84,7 +86,7 @@ int main(int argc, char* argv[])
     
     exec(cmd);
     
-//    plist();
+    plist();
 
     /* since we do not have the wait systemcall yet */
     printf("Now entering busy-loop to let some processes finish\n");

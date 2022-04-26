@@ -25,11 +25,13 @@
 /* HACK defines code you must remove and implement in a proper way */
 #define HACK
 
+struct p_map process_list;
 
 /* This function is called at boot time (threads/init.c) to initialize
  * the process subsystem. */
 void process_init(void)
 {
+   process_list_init(&process_list);
 }
 
 /* This function is currently never called. As thread_exit does not
@@ -37,14 +39,20 @@ void process_init(void)
  * instead. Note however that all cleanup after a process must be done
  * in process_cleanup, and that process_cleanup are already called
  * from thread_exit - do not call cleanup twice! */
-void process_exit(int status UNUSED)
+void process_exit(int status)
 {
+   struct process_info* p_info = process_list_find(&process_list, thread_current()->tid);
+   if(p_info != NULL)
+   {
+      p_info->status_code = status;
+   }
 }
 
 /* Print a list of all running processes. The list shall include all
  * relevant debug information in a clean, readable format. */
 void process_print_list()
 {
+   process_list_print(&process_list);
 }
 
 
@@ -52,6 +60,7 @@ struct parameters_to_start_process
 {
    char* command_line;
    int pid;
+   int p_pid;
    struct semaphore sema;
 };
 
@@ -95,8 +104,7 @@ process_execute (const char *command_line)
   
 
    sema_init(&(arguments.sema), 0);
-   
-   // ALTERNATIVT 1: Lägg till process i listan här
+   arguments.p_pid = thread_current()->tid; //Parent process is 1
 
   /* SCHEDULES function `start_process' to run (LATER) */
    thread_id = thread_create (debug_name, PRI_DEFAULT,
@@ -173,7 +181,12 @@ start_process (struct parameters_to_start_process* parameters)
        "pretend" the arguments are present on the stack. A normal
        C-function expects the stack to contain, in order, the return
        address, the first argument, the second argument etc. */
-    
+   struct process_info * tmp = malloc(sizeof(struct process_info));
+   tmp->alive = true;
+   tmp->status_code = 1337;
+   tmp->parent_alive = true;
+   tmp->parent_id = parameters->p_pid;
+   process_list_insert(&process_list, tmp, thread_current()->tid);
     // if_.esp -= 12; /* this is a very rudimentary solution */
 
     /* This uses a "reference" solution in assembler that you
@@ -185,7 +198,7 @@ start_process (struct parameters_to_start_process* parameters)
        for debug purposes. Disable the dump when it works. */
     
 //    dump_stack ( PHYS_BASE + 15, PHYS_BASE - if_.esp + 16 );
-
+    
   }
   
   if(!success)
@@ -241,6 +254,18 @@ process_wait (int child_id)
   debug("%s#%d: process_wait(%d) ENTERED\n",
         cur->name, cur->tid, child_id);
   /* Yes! You need to do something good here ! */
+
+   struct process_info* child_info = process_list_find(&process_list, child_id);
+
+   if(child_info != NULL)
+   {
+      if(child_info->parent_id == cur->tid)
+      {
+         sema_down(&(child_info->sema));
+         status = child_info->status_code;
+      }
+   }
+
   debug("%s#%d: process_wait(%d) RETURNS %d\n",
         cur->name, cur->tid, child_id, status);
   
@@ -275,7 +300,8 @@ process_cleanup (void)
    * that may sometimes poweroff as soon as process_wait() returns,
    * possibly before the printf is completed.)
    */
-  printf("%s: exit(%d)\n", thread_name(), status);
+  //Look below
+  //printf("%s: exit(%d)\n", thread_name(), status);
    
 
    //Stäng öppna filer
@@ -286,9 +312,26 @@ process_cleanup (void)
    while(file != NULL)
    {
       file_close(file);
-      printf("Closed open file(s) in cleanup\n");
       file = pop_front(file_table);
    }
+
+   //Kolla processlistan
+
+   pid_t current_pid = thread_current()->tid;
+   struct process_info * current_process = process_list_find(&process_list, current_pid);
+   if(current_process != NULL)
+   {
+      printf("%s: exit(%d)\n", thread_name(), current_process->status_code);
+      current_process->alive = false;
+      sema_up(&(current_process->sema));
+      set_parent_dead(&process_list, current_pid);
+   }
+   else
+   {
+      printf("%s: exit(%d)\n", thread_name(), status);
+   }
+   
+   
 
    ////////////////////////
 
