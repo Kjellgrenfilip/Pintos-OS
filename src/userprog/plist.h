@@ -2,8 +2,9 @@
 #define _PLIST_H_
 
 #include "../lib/kernel/list.h"
-#include <stdlib.h>
 #include "../threads/synch.h"
+#include "../threads/malloc.h"
+#include "../lib/stdio.h"
 
 /* Place functions to handle a running process here (process list).
    
@@ -64,7 +65,7 @@ pid_t process_list_insert(struct p_map* m, value_p v, pid_t pid);
 value_p process_list_find(struct p_map*, pid_t k);
 value_p process_list_remove(struct p_map* m, pid_t k);
 void process_list_print(struct p_map*);
-void set_parent_dead(struct p_map* m, pid_t curr);
+void set_dead_and_clean(struct p_map* m, pid_t curr);
 
 int process_list_size(struct p_map*);
 

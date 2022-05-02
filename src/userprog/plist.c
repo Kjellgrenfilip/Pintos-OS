@@ -1,5 +1,4 @@
 #include <stddef.h>
-#include <stddef.h>
 #include "plist.h"
 
 static struct lock p_lock;
@@ -14,6 +13,7 @@ void process_list_init(struct p_map* m)
 
 pid_t process_list_insert(struct p_map* m, value_p v, pid_t pid)
 {
+    lock_acquire(&p_lock);
     struct p_association* ass = (struct p_association*)malloc(sizeof(struct p_association));
     sema_init(&(v->sema), 0);
     ass->value = v;
@@ -21,43 +21,52 @@ pid_t process_list_insert(struct p_map* m, value_p v, pid_t pid)
     m->size++;
 
     list_insert(&(m->content.tail), &(ass->elem));
-
+    lock_release(&p_lock);
     return ass->pid;
 }
 
 value_p process_list_find(struct p_map* m, pid_t k)
 {
+    lock_acquire(&p_lock);
     struct list_elem *e;
 
       for (e = list_begin(&(m->content)); e != list_end (&(m->content)); e = list_next (e))
         {
           struct p_association *ass = list_entry(e, struct p_association, elem);
           if (ass->pid == k)
+          {
+            lock_release(&p_lock);
             return ass->value;
+          }
+            
         }
+    lock_release(&p_lock);
     return NULL;
     //Retunera null eller värdet på nyckeln
 }
 
 value_p process_list_remove(struct p_map* m, pid_t k)
 {
+    lock_acquire(&p_lock);
     struct list_elem *e;
 
-      for (e = list_begin(&(m->content)); e != list_end (&(m->content)); e = list_next (e))
-        {
-          struct p_association *ass = list_entry(e, struct p_association, elem);
-          if (ass->pid == k)
-            {
-                value_p return_value = ass->value;
-                list_remove(e);      //Peka om pekarna
+    for (e = list_begin(&(m->content)); e != list_end (&(m->content)); e = list_next (e))
+    {
+      struct p_association *ass = list_entry(e, struct p_association, elem);
+      if (ass->pid == k)
+      {
+          value_p return_value = ass->value;
+          list_remove(e);      //Peka om pekarna
 
-                m->size--;
+          m->size--;
 
-                if(ass != NULL)    
-                    free(ass);           //Avallokera minne
-                return return_value; //returnera värdet
-            }
-        }
+          if(ass != NULL)    
+              free(ass);           //Avallokera minne
+          lock_release(&p_lock);
+          return return_value; //returnera värdet
+      }
+    }
+    lock_release(&p_lock);
     return NULL;
 }
 
@@ -77,9 +86,9 @@ void process_list_print(struct p_map* m)
   }
 }
 
-void set_parent_dead(struct p_map* m, pid_t curr)
+void set_dead_and_clean(struct p_map* m, pid_t curr)
 {
-  lock_acquire(&p_lock);
+  lock_acquire(&p_lock);    //Tillåt inte flera processer här samtidigt
   struct list_elem* e;
   for (e = list_begin(&(m->content)); e != list_end (&(m->content));)
   {

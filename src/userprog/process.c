@@ -39,7 +39,8 @@ void process_init(void)
  * instead. Note however that all cleanup after a process must be done
  * in process_cleanup, and that process_cleanup are already called
  * from thread_exit - do not call cleanup twice! */
-void process_exit(int status)
+
+void process_exit(int status) //Call this function from sys_exit in order to set the correct status_code before exiting.
 {
    struct process_info* p_info = process_list_find(&process_list, thread_current()->tid);
    if(p_info != NULL)
@@ -104,7 +105,7 @@ process_execute (const char *command_line)
   
 
    sema_init(&(arguments.sema), 0);
-   arguments.p_pid = thread_current()->tid; //Parent process is 1
+   arguments.p_pid = thread_current()->tid; 
 
   /* SCHEDULES function `start_process' to run (LATER) */
    thread_id = thread_create (debug_name, PRI_DEFAULT,
@@ -181,12 +182,14 @@ start_process (struct parameters_to_start_process* parameters)
        "pretend" the arguments are present on the stack. A normal
        C-function expects the stack to contain, in order, the return
        address, the first argument, the second argument etc. */
+
    struct process_info * tmp = malloc(sizeof(struct process_info));
    tmp->alive = true;
    tmp->status_code = 1337;
    tmp->parent_alive = true;
    tmp->parent_id = parameters->p_pid;
    process_list_insert(&process_list, tmp, thread_current()->tid);
+   
     // if_.esp -= 12; /* this is a very rudimentary solution */
 
     /* This uses a "reference" solution in assembler that you
@@ -257,12 +260,14 @@ process_wait (int child_id)
 
    struct process_info* child_info = process_list_find(&process_list, child_id);
 
-   if(child_info != NULL)
+   if(child_info != NULL) //Kollar så att barnet faktiskt finns i listan.
    {
-      if(child_info->parent_id == cur->tid)
+      if(child_info->parent_id == cur->tid) //Dubbelkollar så att att den som kör wait faktiskt är förälder till barnet.
       {
-         sema_down(&(child_info->sema));
-         status = child_info->status_code;
+        sema_down(&(child_info->sema));     //Vänta på att att barnet ska köra sema_up, dvs vara klar med sina uppgifter och returnera rätt status.
+        status = child_info->status_code;       //Barnets sema_up sker i procesS_cleanup då den exitar.
+        //child_info->parent_alive = false;       //Sätt parent död för att markera att delad data inte längre behövs. Nödvändigt för trådar skapade av huvudtråden.
+        process_list_remove(&process_list, child_id);
       }
    }
 
@@ -321,10 +326,11 @@ process_cleanup (void)
    struct process_info * current_process = process_list_find(&process_list, current_pid);
    if(current_process != NULL)
    {
-      printf("%s: exit(%d)\n", thread_name(), current_process->status_code);
+      status = current_process->status_code;
+      printf("%s: exit(%d)\n", thread_name(), status);
       current_process->alive = false;
       sema_up(&(current_process->sema));
-      set_parent_dead(&process_list, current_pid);
+      set_dead_and_clean(&process_list, current_pid);
    }
    else
    {

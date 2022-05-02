@@ -2,7 +2,7 @@
 #define _MAP_H_
 
 #include "../lib/kernel/list.h"
-#include <stdlib.h>
+#include "../threads/malloc.h"
 
 /* Place code to keep track of your per-process open file table here.
  *

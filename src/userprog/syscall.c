@@ -122,10 +122,7 @@ syscall_handler (struct intr_frame *f)
     }
     
     case SYS_EXIT:
-    {
-      // printf("SYS_EXIT with code ");
-     //printf("%d\n", esp[1]);     //Print the entered paratmeter for the exit call
-      
+    { 
       process_exit((int)(esp[1]));
       thread_exit();
       break;
