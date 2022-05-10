@@ -17,7 +17,8 @@ struct data_file {
   // Data i filen.
   char *data;
 };
-static struct lock t_lock[2];
+
+struct lock g_lock[2];
 
 // Håll koll på den fil vi har öppnat. Om ingen fil är öppen är denna variabel NULL.
 // Tänk er att detta är en array av två pekare, dvs. struct data_file *open_files[2];
@@ -26,8 +27,8 @@ struct data_file **open_files;
 // Initiera de datastrukturer vi behöver. Anropas en gång i början.
 void data_init(void) NO_STEP {
   open_files = malloc(sizeof(struct data_file *)*2);
-  lock_init(&t_lock[0]);
-  lock_init(&t_lock[1]);
+  lock_init(&g_lock[0]);
+  lock_init(&g_lock[1]);
 }
 
 // Öppna datafilen med nummer "file" och se till att den finns i RAM. Om den
@@ -35,7 +36,7 @@ void data_init(void) NO_STEP {
 // redan var öppen. Annars laddas filen in i RAM.
 struct data_file *data_open(int file) {
   
-  lock_acquire(&t_lock[file]);
+  lock_acquire(&g_lock[file]);
   struct data_file *result = open_files[file];
   if (result == NULL){
     // Skapa en ny data_file.
@@ -43,7 +44,7 @@ struct data_file *data_open(int file) {
     result->open_count = 0;
     result->id = file;
 
-    printf("%ld%s %d\n", thread_current(),"# Loaded file", file);
+    printf("%s %d\n","# Loaded file", file);
 
     // Simulera att vi läser in data...
     timer_msleep(100);
@@ -55,10 +56,9 @@ struct data_file *data_open(int file) {
     // Spara data i "open_files".
     open_files[file] = result;
   }
-  lock_release(&t_lock[file]);
 
   result->open_count++;
-
+  lock_release(&g_lock[file]);
   return result;
 }
 
@@ -66,16 +66,16 @@ struct data_file *data_open(int file) {
 // att spara minne.
 void data_close(struct data_file *file) {
   int id = file->id;
-  lock_acquire(&t_lock[id]);
+  lock_acquire(&g_lock[id]);
   int open_count = --file->open_count;
   if (open_count <= 0) {
     // Ingen har filen öppen längre. Då kan vi ta bort den!
     open_files[file->id] = NULL;
     free(file->data);
-    printf("%ld%s %d\n", thread_current(),"# Closed file", file->id);
+    printf("%s %d\n","# Closed file", file->id);
     free(file);
   }
-  lock_release(&t_lock[id]);
+  lock_release(&g_lock[id]);
 }
 
 

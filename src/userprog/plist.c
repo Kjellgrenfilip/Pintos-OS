@@ -96,8 +96,12 @@ void set_dead_and_clean(struct p_map* m, pid_t curr)
     if (ass->value->parent_id == curr)
     {
       ass->value->parent_alive = false;
-      
     }
+    if (ass->pid == curr)
+    {
+      ass->value->alive = false;
+    }
+
     if(ass->value->alive == false && ass->value->parent_alive == false)
     {
       e = list_remove(e);

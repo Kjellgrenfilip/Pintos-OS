@@ -185,7 +185,7 @@ start_process (struct parameters_to_start_process* parameters)
 
    struct process_info * tmp = malloc(sizeof(struct process_info));
    tmp->alive = true;
-   tmp->status_code = 1337;
+   tmp->status_code = -1;
    tmp->parent_alive = true;
    tmp->parent_id = parameters->p_pid;
    process_list_insert(&process_list, tmp, thread_current()->tid);
@@ -265,8 +265,7 @@ process_wait (int child_id)
       if(child_info->parent_id == cur->tid) //Dubbelkollar så att att den som kör wait faktiskt är förälder till barnet.
       {
         sema_down(&(child_info->sema));     //Vänta på att att barnet ska köra sema_up, dvs vara klar med sina uppgifter och returnera rätt status.
-        status = child_info->status_code;       //Barnets sema_up sker i procesS_cleanup då den exitar.
-        //child_info->parent_alive = false;       //Sätt parent död för att markera att delad data inte längre behövs. Nödvändigt för trådar skapade av huvudtråden.
+        status = child_info->status_code;       //Barnets sema_up sker i process_cleanup då den exitar.
         process_list_remove(&process_list, child_id);
       }
    }
@@ -327,9 +326,10 @@ process_cleanup (void)
    if(current_process != NULL)
    {
       status = current_process->status_code;
+
       printf("%s: exit(%d)\n", thread_name(), status);
-      current_process->alive = false;
-      sema_up(&(current_process->sema));
+      //current_process->alive = false;  //byt plats???
+      sema_up(&(current_process->sema)); //byt plats???
       set_dead_and_clean(&process_list, current_pid);
    }
    else
