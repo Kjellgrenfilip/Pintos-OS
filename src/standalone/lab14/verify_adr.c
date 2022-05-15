@@ -18,13 +18,29 @@
  *
  *  gcc -Wall -Wextra -std=gnu99 -pedantic -m32 -g pagedir.o verify_adr.c
  */
-#error Read comment above and then remove this line.
+//#error Read comment above and then remove this line.
 
 /* Verify all addresses from and including 'start' up to but excluding
  * (start+length). */
 bool verify_fix_length(void* start, unsigned length)
-{
-  // ADD YOUR CODE HERE
+{   
+    if(start == NULL)
+        return false;
+    
+    char* current_adr = (char*)pg_round_down(start);  //Starta på första adressen i sammma page som start 
+    char* end_adr   = (char*)(start);
+    end_adr += length;
+    
+    while(current_adr < end_adr)
+    {
+      if(pagedir_get_page(thread_current()->pagedir, (void*)current_adr) == NULL)    //Om någon address inte stämmer, returnera false
+        return false;
+      else
+        current_adr += PGSIZE;
+    }
+
+  return true;
+    
 }
 
 /* Verify all addresses from and including 'start' up to and including
@@ -33,7 +49,21 @@ bool verify_fix_length(void* start, unsigned length)
  */
 bool verify_variable_length(char* start)
 {
-  // ADD YOUR CODE HERE
+    char* current_adr = start;
+    char* current_page_adr = (char*)pg_round_down((void*)start);        //Page för startadressen
+    
+    while(pagedir_get_page(thread_current()->pagedir, (void*)current_page_adr) != NULL)
+    {   
+        while(current_page_adr == (char*)pg_round_down((void*)current_adr))
+        {
+            if(is_end_of_string(current_adr))
+                return true;
+            current_adr++;
+        }
+        current_page_adr = (char*)pg_round_down((void*)current_adr);   //Inte längre på samma page
+    }
+    
+    return false;
 }
 
 /* Definition of test cases. */
@@ -79,6 +109,7 @@ int main(int argc, char* argv[])
   /* Test the algorithm with a C-string (start address with
    * terminating null-character).
    */
+  
   for (i = 0; i < TEST_CASE_COUNT; ++i)
   {
     start_evaluate_algorithm(test_case[i].start, test_case[i].length);
