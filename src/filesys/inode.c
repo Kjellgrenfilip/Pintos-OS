@@ -152,7 +152,7 @@ inode_open (disk_sector_t sector)
       inode = list_entry (e, struct inode, elem);
       if (inode->sector == sector) 
         {
-          inode_reopen (inode);
+          inode_reopen(inode);
           lock_release(&inode_lock);
           return inode; 
         }
@@ -215,10 +215,13 @@ inode_close (struct inode *inode)
     
   /* Release resources if this was the last opener. */
   lock_acquire(&inode_lock);
+  lock_acquire(&(inode->open_count_lock));
   if (--inode->open_cnt == 0)
     {
       /* Remove from inode list. */
+      
       list_remove (&inode->elem);
+      lock_release(&inode_lock);
       
  
       /* Deallocate blocks if the file is marked as removed. */
@@ -228,11 +231,13 @@ inode_close (struct inode *inode)
           free_map_release (inode->data.start,
                             bytes_to_sectors (inode->data.length)); 
         }
-
+      lock_release(&(inode->open_count_lock));
       free (inode);
+      return;
       //lock_release(&inode_lock);
       //return;
     }
+  lock_release(&(inode->open_count_lock));
   lock_release(&inode_lock);
   return;
 }
