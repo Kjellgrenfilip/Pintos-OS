@@ -261,3 +261,55 @@ invalidate_pagedir (uint32_t *pd)
       pagedir_activate (pd);
     } 
 }
+
+/* Verify all addresses from and including 'start' up to but excluding
+ * (start+length). */
+bool verify_fix_length(uint32_t* pdir, void* start, unsigned length)
+{   
+    if(start == NULL)
+        return false;
+    if(!is_user_vaddr(start))
+      return false;
+    
+    char* current_adr = (char*)pg_round_down(start);  //Starta på första adressen i sammma page som start
+    char* end_adr   = (char*)(start);
+    end_adr += length;
+    
+    if(!is_user_vaddr(end_adr-1))
+      return false;
+
+    while(current_adr < end_adr)
+    {
+      if(pagedir_get_page(pdir, (void*)current_adr) == NULL)    //Om någon address inte stämmer, returnera false
+        return false;
+      else
+        current_adr += PGSIZE;
+    }
+
+  return true;
+    
+}
+
+bool verify_variable_length(uint32_t* pdir, char* start)
+{ 
+    if(start == NULL)
+        return false;
+    char* current_adr = start;
+    //char* current_page_adr = (char*)pg_round_down((void*)start);        //Page för startadressen
+    unsigned current_page = pg_no((void*)current_adr);
+    
+    while(pagedir_get_page(pdir, (void*)current_adr) != NULL)
+    {   
+        while(current_page == pg_no((void*)current_adr))
+        {
+            if(!is_user_vaddr((void*)current_adr))    //Kolla om vi nått phys_base innan vi läser
+              return false;
+            if(*current_adr == '\0') //if(current_adr == '\0')
+                return true;
+            current_adr++;
+        }
+        current_page = pg_no((void*)current_adr);   //Inte längre på samma page
+    }
+    
+    return false;
+}

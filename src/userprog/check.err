@@ -1,0 +1,9 @@
+make[1]: *** [../../tests/Make.tests:105: tests/klaar/pfs.output] Interrupt
+make[1]: *** [../../tests/Make.tests:105: tests/userprog/wait-bad-pid.output] Interrupt
+make[1]: *** [../../tests/Make.tests:105: tests/userprog/multi-child-fd.output] Interrupt
+make[1]: *** [../../tests/Make.tests:105: tests/userprog/wait-twice.output] Interrupt
+make[1]: *** [../../tests/Make.tests:105: tests/userprog/wait-killed.output] Interrupt
+make[1]: *** [../../tests/Make.tests:105: tests/userprog/wait-simple.output] Interrupt
+make[1]: *** [../../tests/Make.tests:105: tests/filesys/base/lg-create.output] Interrupt
+make[1]: *** [../../tests/Make.tests:105: tests/userprog/multi-recurse.output] Interrupt
+make: *** [../Makefile.kernel:10: check] Interrupt

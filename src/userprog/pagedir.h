@@ -15,4 +15,7 @@ bool pagedir_is_accessed (uint32_t *pd, const void *upage);
 void pagedir_set_accessed (uint32_t *pd, const void *upage, bool accessed);
 void pagedir_activate (uint32_t *pd);
 
+bool verify_fix_length(uint32_t* pdir, void* start, unsigned length);
+bool verify_variable_length(uint32_t* pdir,char* start);
+
 #endif /* userprog/pagedir.h */

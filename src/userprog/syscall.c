@@ -26,7 +26,8 @@ syscall_init (void)
 /* This array defined the number of arguments each syscall expects.
    For example, if you want to find out the number of arguments for
    the read system call you shall write:
-   
+   if(start == NULL)
+        return false;
    int sys_read_arg_count = argc[ SYS_READ ];
    
    All system calls have a name such as SYS_READ defined as an enum
@@ -42,13 +43,23 @@ const int argc[] = {
 };
 
 //File table i thread
-//Stäng filer i process cleanup
-
-
-static void
-syscall_handler (struct intr_frame *f) 
+//Stäng filer i process cleanupif(start == NULL)
+        
+void syscall_handler (struct intr_frame *f) 
 {
   int32_t* esp = (int32_t*)f->esp;    //Stackpekare
+
+  if(esp == NULL)
+  {
+    process_exit(-1);
+    thread_exit();
+  }
+  if(!verify_fix_length(thread_current()->pagedir, (void*)esp, 4))
+      {
+        process_exit(-1);
+        thread_exit();
+       
+      }
 
   struct map* file_table = &(thread_current()->file_table);   //Hämta pekare till file table från tråden
   
@@ -56,6 +67,12 @@ syscall_handler (struct intr_frame *f)
   {
     case SYS_READ:    //Argument: fd, buffer, size
     {
+      if(!verify_fix_length(thread_current()->pagedir, (void*)esp[2], esp[3]))
+      {
+        thread_exit();
+        break;
+      }
+
       if(esp[1] == STDIN_FILENO) //STDIN_FILENO
       {
         int result = 0;
@@ -90,6 +107,12 @@ syscall_handler (struct intr_frame *f)
     
     case SYS_WRITE:
     {
+      if(!verify_fix_length(thread_current()->pagedir, (void*)esp, 16))
+        thread_exit();
+      if(!verify_fix_length(thread_current()->pagedir, (void*)esp[2], esp[3]))
+        thread_exit();
+
+
       if(esp[1] == STDOUT_FILENO) 
       {
 
@@ -115,32 +138,55 @@ syscall_handler (struct intr_frame *f)
     
     case SYS_HALT:
     {
-      printf("SYS_HALT\n");
-
       power_off();
       break;
     }
     
     case SYS_EXIT:
     { 
-      process_exit((int)(esp[1]));
+      if(verify_fix_length(thread_current()->pagedir, (void*)esp, 8))
+        process_exit((int)(esp[1]));
+      else
+        process_exit(-1);
       thread_exit();
       break;
     }
     
     case SYS_CREATE:
     {
+      if(!verify_fix_length(thread_current()->pagedir, (void*)esp, 12))
+      {
+        f->eax = false;
+        process_exit(-1);
+        thread_exit();
+      }
+      if(!verify_variable_length(thread_current()->pagedir, (void*)esp[1]))
+        thread_exit();
+
       if(esp[2] <= 0)
         f->eax = false;
       
-      f->eax = filesys_create((char*)esp[1], esp[2]); //filesys_create returnerar true om vi lyckade skapa filen. Annars false.
+      f->eax = filesys_create((char*)esp[1], esp[2]);   //filesys_create returnerar true om vi lyckade skapa filen. Annars false.
       
       break;
     }
     
     case SYS_OPEN:
     {
-      
+      if(!verify_fix_length(thread_current()->pagedir, (void*)esp, 8))
+      {
+        f->eax = -1;
+        process_exit(-1);
+        thread_exit();
+      }
+      if(!verify_variable_length(thread_current()->pagedir, (char*)esp[1]))
+      {
+        f->eax = -1;
+        process_exit(-1);
+        thread_exit();
+      }
+
+
       if(map_size(file_table) >= 16) //Möjligtvis låta mappen själv hålla koll? 
       {
         f->eax = -1;
@@ -162,6 +208,12 @@ syscall_handler (struct intr_frame *f)
     
     case SYS_CLOSE:
     {
+      if(!verify_fix_length(thread_current()->pagedir, (void*)esp, 8))
+      {
+        thread_exit();
+        break;
+      }
+      
       struct file* file = map_remove(file_table, esp[1]); //map_remove returnerar filen om den finns. Annars NULL
       if(file == NULL)
       {
@@ -174,12 +226,23 @@ syscall_handler (struct intr_frame *f)
     
     case SYS_REMOVE:
     {
+      if(!verify_fix_length(thread_current()->pagedir, (void*)esp, 8))
+      {
+        thread_exit();
+        break;
+      }
+
       f->eax = filesys_remove((char*)esp[1]); //Returnerar false om filen inte fanns. True om den fanns och togs bort.
       break;
     }
 
     case SYS_SEEK:
     {
+      if(!verify_fix_length(thread_current()->pagedir, (void*)esp, 12))
+      {
+        thread_exit();
+        break;
+      }
       struct file* file = map_find(file_table, esp[1]); 
         if(file == NULL)  //Finns den angivna filen öppen?
           {
@@ -200,6 +263,11 @@ syscall_handler (struct intr_frame *f)
     
     case SYS_TELL:
     {
+      if(!verify_fix_length(thread_current()->pagedir, (void*)esp, 8))
+      {
+        thread_exit();
+        break;
+      }
       struct file* file = map_find(file_table, esp[1]);
         if(file == NULL)
           {
@@ -212,6 +280,11 @@ syscall_handler (struct intr_frame *f)
     
     case SYS_FILESIZE:
     {
+      if(!verify_fix_length(thread_current()->pagedir, (void*)esp, 8))
+      {
+        thread_exit();
+        break;
+      }
       struct file* file = map_find(file_table, esp[1]);
         if(file == NULL)
           {
@@ -221,8 +294,19 @@ syscall_handler (struct intr_frame *f)
       f->eax = file_length(file);
       break;
     }
+    
     case SYS_EXEC:
     {
+      if(!verify_fix_length(thread_current()->pagedir, (void*)esp, 8))
+      {
+        thread_exit();
+        break;
+      }
+      if(!verify_variable_length(thread_current()->pagedir, (char*)esp[1]))
+      {
+        thread_exit();
+        break;
+      }
       f->eax = process_execute((char*)esp[1]);
       break;
     }
@@ -234,12 +318,22 @@ syscall_handler (struct intr_frame *f)
 
     case SYS_SLEEP:
     {
+      if(!verify_fix_length(thread_current()->pagedir, (void*)esp, 8))
+      {
+        thread_exit();
+        break;
+      }
       timer_msleep((int)esp[1]);
       break;
     }
 
     case SYS_WAIT:
     {
+      if(!verify_fix_length(thread_current()->pagedir, (void*)esp, 8))
+      {
+        thread_exit();
+        break;
+      }
       f->eax = process_wait((int)esp[1]);
       break;
     }
@@ -252,6 +346,6 @@ syscall_handler (struct intr_frame *f)
       
       thread_exit ();
     }
-    
   }
+
 }
