@@ -50,17 +50,18 @@ bool verify_fix_length(void* start, unsigned length)
 bool verify_variable_length(char* start)
 {
     char* current_adr = start;
-    char* current_page_adr = (char*)pg_round_down((void*)start);        //Page för startadressen
+    //char* current_page_adr = (char*)pg_round_down((void*)start);        //Page för startadressen
+    unsigned current_page = pg_no((void*)current_adr);
     
-    while(pagedir_get_page(thread_current()->pagedir, (void*)current_page_adr) != NULL)
+    while(pagedir_get_page(thread_current()->pagedir, (void*)current_adr) != NULL)
     {   
-        while(current_page_adr == (char*)pg_round_down((void*)current_adr))
+        while(current_page == pg_no((void*)current_adr))
         {
             if(is_end_of_string(current_adr))
                 return true;
             current_adr++;
         }
-        current_page_adr = (char*)pg_round_down((void*)current_adr);   //Inte längre på samma page
+        current_page = pg_no((void*)current_adr);   //Inte längre på samma page
     }
     
     return false;
